@@ -3,35 +3,38 @@
 //
 #include "SparseMatrix.h"
 #include <algorithm>
+const double SparseMatrix::MINDOUBLE = 0.00001;
 
-double SparseMatrix::at(int row, int col)
+double& SparseMatrix::at(int row, int col)
 {
+    zerocheck();
+    double zero = 0;
     if (row>_row || col >_col || row <0||col <0){
         // ERROR
-        return 0;
+        return zero;
     }
     int trow,tcol;
     int index=-1; // 当前元素在数组中的位置
     vector<int>::iterator tmp;
-    for (int i = 0; i < _numOfMembers; ++i) {
+    for (int i = 0; i < value.size(); ++i) {
         if(row == row_ind[i]){
             index = i;
             break;
         }
     }
-    if ( -1 == index){
-        // Element not found.
-        return 0;
-    }
-    while(row_ind[index] == row){
-        if (col_ind[index] == col){
-            return value[index];
+    if ( -1 != index){
+        while(row_ind[index] == row){
+            if (col_ind[index] == col){
+                return value[index];
+            }
+            index++;
         }
-        index++;
     }
-    // element not found.
-    return 0;
+    index = insert(0,row,col);
+    return value[index];
+
 }
+
 
 void SparseMatrix::initializeFromVector(int row, int col, double* vals)
 {
@@ -55,18 +58,70 @@ void SparseMatrix::initializeFromVector(int row, int col, double* vals)
     }
 }
 
+// return value:
+// Error: error number
+// Successful: the index of new element
 int SparseMatrix::insert(double val, int row, int col)
 {
+    zerocheck();
     if (row > _row || col > _col || row <0 || col < 0) {
         // ERROR
         return INDEX_OUT_OF_RANGE;
     }
-    if(at(row,col) != 0){
-        // already have an element
-        return ELEMENT_CONFLICT;
-    }
+    // no checks for exist element
+//    if(at(row,col) != 0){
+//        // already have an element
+//        return ELEMENT_CONFLICT;
+//    }
     // insert a new element
-    return OP_SUCCESS;
+    vector<int>::iterator rowit,colit;
+    vector<double>::iterator valit;
+
+    rowit = row_ind.begin();
+    colit= col_ind.begin();
+    valit = value.begin();
+
+    int i;
+    for (i = 0; i < _numOfMembers; ++i) {
+        if (row_ind[i] == row || row_ind[i]>row){
+            break;
+        }
+        rowit++;colit++;valit++;
+    }
+    if ( i == _numOfMembers){
+        row_ind.push_back(row);
+        col_ind.push_back(col);
+        value.push_back(val);
+    }else {
+        row_ind.insert(rowit,row);
+        col_ind.insert(colit,col);
+        value.insert(valit,val);
+    }
+    _numOfMembers++;
+    return i;
+}
+
+void SparseMatrix::zerocheck() {
+    vector<int>::iterator rowit,colit;
+    vector<double>::iterator valit;
+
+    rowit = row_ind.begin();
+    colit = col_ind.begin();
+    valit = value.begin();
+
+    for (int i = 0; i < _numOfMembers; ++i) {
+        if(abs(0 - *valit) < MINDOUBLE){
+            value.erase(valit);
+            row_ind.erase(rowit);
+            col_ind.erase(colit);
+            _numOfMembers--;
+        }else{
+            valit++;
+            rowit++;
+            colit++;
+        }
+
+    }
 }
 
 
