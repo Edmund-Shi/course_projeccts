@@ -2,6 +2,7 @@
 // Created by 36202 on 29/03/2017.
 //
 #include "SparseMatrix.h"
+#include "Utility.h"
 #include <algorithm>
 const double SparseMatrix::MINDOUBLE = 0.00001;
 
@@ -13,7 +14,6 @@ double& SparseMatrix::at(int row, int col)
         // ERROR
         return zero;
     }
-    int trow,tcol;
     int index=-1; // 当前元素在数组中的位置
     vector<int>::iterator tmp;
     for (int i = 0; i < value.size(); ++i) {
@@ -122,6 +122,37 @@ void SparseMatrix::zerocheck() {
         }
 
     }
+}
+
+double * SparseMatrix::Gauss_Seidel(double *array, int len) {
+    if (len != _row || _row != _col){
+        return  NULL;
+    }
+    Utility utility;
+    double *res = new double[len];
+    double *last = new double[len]; // 用于存储上一次的计算结果
+    utility.ArrayCopy(res,array,len);
+    utility.ArrayCopy(last,res,len);
+    while (1){
+        // repeat until last == res
+        for(int i = 0;i<len;i++){
+            double row_sum_before = 0,row_sum_after = 0;
+            for (int j = 0; j < i; ++j) {
+                row_sum_before += at(i,j)*res[j];
+            }
+            for (int k = i+1; k < len; ++k) {
+                row_sum_after+=at(i,k)*last[k];
+            }
+            res[i] = (1/at(i,i))*(array[i] - row_sum_before - row_sum_after);
+        }
+        if (utility.ArrayCmp(res,last,len) == 0){
+            break;
+        }else {
+            utility.ArrayCopy(last,res,len);
+        }
+    }
+    delete[] last;
+    return res;
 }
 
 

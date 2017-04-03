@@ -22,11 +22,17 @@ private:
     void zerocheck();       // 删除矩阵中的0元素
 public:
     const static double MINDOUBLE ;
+    SparseMatrix(){
+        _row = _col = _numOfMembers = 0;
+        value.clear(); col_ind.clear(); row_ind.clear();
+    }
     double & at(int row, int col);
 
     int insert(double val, int row, int col);
     void initializeFromVector(int row, int col, double* vals);
 
+    //传入的参数表示的是向量b的内容以及向量b的长度
+    double * Gauss_Seidel(double *array, int len) ;
 };
 
 
